@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referrals - FlashData</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container navbar-content">
+      <a href="/dashboard.html" class="logo">⚡ FlashData</a>
+      <ul class="nav-links">
+        <li><a href="/dashboard.html">Dashboard</a></li>
+        <li><a href="/buy-data.html">Buy Data</a></li>
+        <li><a href="/orders.html">Orders</a></li>
+        <li><a href="/transactions.html">Transactions</a></li>
+        <li><a href="/referrals.html">Referrals</a></li>
+        <li><a href="/profile.html">Profile</a></li>
+        <li><a href="#" onclick="logout()" class="btn btn-outline">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container" style="padding: 2rem 0;">
+    <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 2rem;">Referral Program</h1>
+
+    <div class="grid grid-2" style="margin-bottom: 2rem;">
+      <div class="stat-card">
+        <div class="stat-value" id="totalReferrals">0</div>
+        <div class="stat-label">Total Referrals</div>
+      </div>
+      <div class="stat-card" style="background: linear-gradient(135deg, #10b981, #059669);">
+        <div class="stat-value" id="totalEarnings">GH₵ 0</div>
+        <div class="stat-label">Total Earnings</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
+      <h3 class="card-header">Your Referral Link</h3>
+      <div style="display: flex; gap: 1rem; align-items: center;">
+        <input type="text" class="form-input" id="referralLink" readonly style="flex: 1;">
+        <button class="btn btn-primary" onclick="copyReferralLink()">Copy Link</button>
+      </div>
+      <p style="margin-top: 1rem; color: var(--gray);">Share your referral link and earn 2% on every purchase made by your referrals!</p>
+    </div>
+
+    <div class="card">
+      <h3 class="card-header">Your Referrals</h3>
+      <div id="referralsContainer">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    checkAuth();
+
+    async function loadReferrals() {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        const referralLink = `${window.location.origin}/register.html?ref=${user.referralCode}`;
+        document.getElementById('referralLink').value = referralLink;
+
+        const response = await fetch(`${API_URL}/referrals`, {
+          headers: getAuthHeaders(),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          document.getElementById('totalReferrals').textContent = data.referrals.length;
+          document.getElementById('totalEarnings').textContent = formatCurrency(data.totalEarnings);
+          displayReferrals(data.referrals);
+        }
+      } catch (error) {
+        console.error('Error loading referrals:', error);
+      }
+    }
+
+    function displayReferrals(referrals) {
+      const container = document.getElementById('referralsContainer');
+      
+      if (referrals.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--gray); padding: 2rem;">No referrals yet. Start sharing your link!</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Earnings</th>
+              <th>Status</th>
+              <th>Joined Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${referrals.map(ref => `
+              <tr>
+                <td><strong>${ref.referred.fullName}</strong></td>
+                <td>${ref.referred.email}</td>
+                <td style="color: var(--success); font-weight: 600;">${formatCurrency(ref.earnings)}</td>
+                <td><span class="badge badge-${ref.status === 'Active' ? 'success' : 'danger'}">${ref.status}</span></td>
+                <td>${formatDate(ref.referred.createdAt)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function copyReferralLink() {
+      const referralLink = document.getElementById('referralLink');
+      referralLink.select();
+      document.execCommand('copy');
+      showToast('Referral link copied!', 'success');
+    }
+
+    loadReferrals();
+  </script>
+</body>
+</html>

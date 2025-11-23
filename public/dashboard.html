@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - FlashData</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/chatbot.css">
+  <link rel="stylesheet" href="/css/whatsapp-widget.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container navbar-content">
+      <a href="/dashboard.html" class="logo">⚡ FlashData</a>
+      <ul class="nav-links">
+        <li><a href="/dashboard.html">Dashboard</a></li>
+        <li><a href="/buy-data.html">Buy Data</a></li>
+        <li><a href="/orders.html">Orders</a></li>
+        <li><a href="/transactions.html">Transactions</a></li>
+        <li><a href="/referrals.html">Referrals</a></li>
+        <li><a href="/profile.html">Profile</a></li>
+        <li><a href="#" onclick="logout()" class="btn btn-outline">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container" style="padding: 2rem 0;">
+    <!-- User Info -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 25px; padding: 3rem; margin-bottom: 2rem; box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3); position: relative; overflow: hidden;">
+      <div style="position: absolute; top: -50%; right: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); animation: rotate 20s linear infinite;"></div>
+      <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; flex-wrap: wrap; gap: 2rem;">
+        <div>
+          <h1 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.75rem; text-shadow: 0 4px 15px rgba(0,0,0,0.2);" id="userName">Welcome Back! 👋</h1>
+          <p style="opacity: 0.95; font-size: 1.1rem; font-weight: 600;" id="userRole">Customer</p>
+        </div>
+        <div style="text-align: right; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 2rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.3);">
+          <p style="opacity: 0.95; margin-bottom: 0.75rem; font-weight: 600; font-size: 1rem;">💰 Wallet Balance</p>
+          <h2 style="font-size: 3rem; font-weight: 900; text-shadow: 0 4px 15px rgba(0,0,0,0.2);" id="walletBalance">GH₵ 0.00</h2>
+          <button class="btn" style="background: white; color: #667eea; margin-top: 1.5rem; box-shadow: 0 8px 25px rgba(0,0,0,0.2);" onclick="showTopUpModal()">💳 Top Up Wallet</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-4" style="margin-bottom: 2rem;">
+      <div class="stat-card">
+        <div class="stat-value" id="totalOrders">0</div>
+        <div class="stat-label">Total Orders</div>
+      </div>
+      <div class="stat-card" style="background: linear-gradient(135deg, #10b981, #059669);">
+        <div class="stat-value" id="completedOrders">0</div>
+        <div class="stat-label">Completed</div>
+      </div>
+      <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+        <div class="stat-value" id="totalSpent">GH₵ 0</div>
+        <div class="stat-label">Total Spent</div>
+      </div>
+      <div class="stat-card" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+        <div class="stat-value" id="totalEarnings">GH₵ 0</div>
+        <div class="stat-label">Total Earnings</div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <h3 class="card-header">Quick Actions</h3>
+      <div class="grid grid-4">
+        <a href="/buy-data.html" class="btn btn-primary">📱 Buy Data</a>
+        <a href="/orders.html" class="btn btn-secondary">📦 View Orders</a>
+        <a href="/transactions.html" class="btn btn-success">💳 Transactions</a>
+        <a href="/referrals.html" class="btn" style="background: #f59e0b; color: white;">👥 Referrals</a>
+      </div>
+    </div>
+
+    <!-- Referral Section -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <h3 class="card-header">Your Referral Link</h3>
+      <div style="display: flex; gap: 1rem; align-items: center;">
+        <input type="text" class="form-input" id="referralLink" readonly style="flex: 1;">
+        <button class="btn btn-primary" onclick="copyReferralLink()">Copy Link</button>
+      </div>
+      <p style="margin-top: 1rem; color: var(--gray);">Share your referral link and earn 2% on every purchase!</p>
+    </div>
+
+    <!-- Weekly Sales Chart -->
+    <div class="card">
+      <h3 class="card-header">Weekly Sales Activity</h3>
+      <canvas id="salesChart" style="max-height: 300px;"></canvas>
+    </div>
+  </div>
+
+  <!-- Top Up Modal -->
+  <div id="topUpModal" class="modal">
+    <div class="modal-content">
+      <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;">Top Up Wallet</h3>
+      <form id="topUpForm">
+        <div class="form-group">
+          <label class="form-label">Amount (GH₵)</label>
+          <input type="number" class="form-input" id="topUpAmount" min="10" required placeholder="Enter amount">
+        </div>
+        <div style="display: flex; gap: 1rem;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;">Pay with Paystack</button>
+          <button type="button" class="btn btn-outline" onclick="closeTopUpModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- WhatsApp Community Widget -->
+  <div class="whatsapp-widget">
+    <a href="https://whatsapp.com/channel/0029Vb7J40MF6sn5kUuhDO27" target="_blank" class="whatsapp-button">
+      <div class="whatsapp-pulse"></div>
+      <svg class="whatsapp-icon" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+      </svg>
+      <div class="whatsapp-text">
+        <span class="whatsapp-text-main">Join Community</span>
+        <span class="whatsapp-text-sub">Get exclusive updates!</span>
+      </div>
+    </a>
+  </div>
+
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/chatbot.js"></script>
+</body>
+</html>

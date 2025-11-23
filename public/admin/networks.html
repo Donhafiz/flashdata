@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Networks - FlashData Admin</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container navbar-content">
+      <a href="/admin/dashboard.html" class="logo">⚡ FlashData Admin</a>
+      <ul class="nav-links">
+        <li><a href="/admin/dashboard.html">Dashboard</a></li>
+        <li><a href="/admin/networks.html">Networks</a></li>
+        <li><a href="/admin/bundles.html">Bundles</a></li>
+        <li><a href="/admin/users.html">Users</a></li>
+        <li><a href="/admin/orders.html">Orders</a></li>
+        <li><a href="/admin/announcements.html">Announcements</a></li>
+        <li><a href="#" onclick="logout()" class="btn btn-outline">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container" style="padding: 2rem 0;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <h1 style="font-size: 2rem; font-weight: 800;">Manage Networks</h1>
+      <button class="btn btn-primary" onclick="showAddNetworkModal()">+ Add Network</button>
+    </div>
+
+    <div class="grid grid-3">
+      <div id="networksContainer">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Network Modal -->
+  <div id="networkModal" class="modal">
+    <div class="modal-content">
+      <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;" id="modalTitle">Add Network</h3>
+      <form id="networkForm">
+        <input type="hidden" id="networkId">
+        
+        <div class="form-group">
+          <label class="form-label">Network Name</label>
+          <select class="form-select" id="name" required>
+            <option value="">Select Network</option>
+            <option value="MTN">MTN</option>
+            <option value="Telecel">Telecel</option>
+            <option value="AirtelTigo">AirtelTigo</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="isActive">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;">Save Network</button>
+          <button type="button" class="btn btn-outline" onclick="closeNetworkModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    checkAuth();
+
+    async function loadNetworks() {
+      try {
+        const response = await fetch(`${API_URL}/admin/networks`, {
+          headers: getAuthHeaders(),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          displayNetworks(data.networks);
+        }
+      } catch (error) {
+        console.error('Error loading networks:', error);
+      }
+    }
+
+    function displayNetworks(networks) {
+      const container = document.getElementById('networksContainer');
+      
+      if (networks.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--gray); padding: 2rem;">No networks yet</p>';
+        return;
+      }
+      
+      container.innerHTML = networks.map(network => `
+        <div class="card">
+          <div style="text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📱</div>
+            <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">${network.name}</h3>
+            <span class="badge badge-${network.isActive ? 'success' : 'danger'}">${network.isActive ? 'Active' : 'Inactive'}</span>
+            <div style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: center;">
+              <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick='editNetwork(${JSON.stringify(network)})'>Edit</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function showAddNetworkModal() {
+      document.getElementById('modalTitle').textContent = 'Add Network';
+      document.getElementById('networkForm').reset();
+      document.getElementById('networkId').value = '';
+      document.getElementById('networkModal').classList.add('active');
+    }
+
+    function closeNetworkModal() {
+      document.getElementById('networkModal').classList.remove('active');
+    }
+
+    function editNetwork(network) {
+      document.getElementById('modalTitle').textContent = 'Edit Network';
+      document.getElementById('networkId').value = network._id;
+      document.getElementById('name').value = network.name;
+      document.getElementById('isActive').value = network.isActive.toString();
+      document.getElementById('networkModal').classList.add('active');
+    }
+
+    document.getElementById('networkForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const networkId = document.getElementById('networkId').value;
+      const networkData = {
+        name: document.getElementById('name').value,
+        isActive: document.getElementById('isActive').value === 'true',
+      };
+      
+      try {
+        const url = networkId ? `${API_URL}/admin/networks/${networkId}` : `${API_URL}/admin/networks`;
+        const method = networkId ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
+          headers: getAuthHeaders(),
+          body: JSON.stringify(networkData),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showToast('Network saved successfully!', 'success');
+          closeNetworkModal();
+          loadNetworks();
+        } else {
+          showToast('Failed to save network', 'error');
+        }
+      } catch (error) {
+        showToast('An error occurred', 'error');
+      }
+    });
+
+    loadNetworks();
+  </script>
+</body>
+</html>

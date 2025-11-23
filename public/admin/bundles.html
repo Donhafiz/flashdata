@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Bundles - FlashData Admin</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container navbar-content">
+      <a href="/admin/dashboard.html" class="logo">⚡ FlashData Admin</a>
+      <ul class="nav-links">
+        <li><a href="/admin/dashboard.html">Dashboard</a></li>
+        <li><a href="/admin/networks.html">Networks</a></li>
+        <li><a href="/admin/bundles.html">Bundles</a></li>
+        <li><a href="/admin/users.html">Users</a></li>
+        <li><a href="/admin/orders.html">Orders</a></li>
+        <li><a href="/admin/announcements.html">Announcements</a></li>
+        <li><a href="#" onclick="logout()" class="btn btn-outline">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container" style="padding: 2rem 0;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <h1 style="font-size: 2rem; font-weight: 800;">Manage Bundles</h1>
+      <button class="btn btn-primary" onclick="showAddBundleModal()">+ Add Bundle</button>
+    </div>
+
+    <div class="card">
+      <div id="bundlesContainer">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Bundle Modal -->
+  <div id="bundleModal" class="modal">
+    <div class="modal-content">
+      <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;" id="modalTitle">Add Bundle</h3>
+      <form id="bundleForm">
+        <input type="hidden" id="bundleId">
+        
+        <div class="form-group">
+          <label class="form-label">Network</label>
+          <select class="form-select" id="network" required>
+            <option value="">Select Network</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Bundle Name</label>
+          <input type="text" class="form-input" id="name" required placeholder="e.g., Daily Bundle">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Data Amount</label>
+          <input type="text" class="form-input" id="dataAmount" required placeholder="e.g., 1GB">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Validity</label>
+          <input type="text" class="form-input" id="validity" required placeholder="e.g., 24 Hours">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Base Price (GH₵)</label>
+          <input type="number" class="form-input" id="price" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Customer Price (GH₵)</label>
+          <input type="number" class="form-input" id="customerPrice" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Agent Price (GH₵)</label>
+          <input type="number" class="form-input" id="agentPrice" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Agent Pro Price (GH₵)</label>
+          <input type="number" class="form-input" id="agentProPrice" step="0.01" required>
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;">Save Bundle</button>
+          <button type="button" class="btn btn-outline" onclick="closeBundleModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    checkAuth();
+
+    let networks = [];
+
+    async function loadNetworks() {
+      try {
+        const response = await fetch(`${API_URL}/admin/networks`, {
+          headers: getAuthHeaders(),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          networks = data.networks;
+          const select = document.getElementById('network');
+          select.innerHTML = '<option value="">Select Network</option>';
+          networks.forEach(network => {
+            select.innerHTML += `<option value="${network._id}">${network.name}</option>`;
+          });
+        }
+      } catch (error) {
+        console.error('Error loading networks:', error);
+      }
+    }
+
+    async function loadBundles() {
+      try {
+        const response = await fetch(`${API_URL}/admin/bundles`, {
+          headers: getAuthHeaders(),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          displayBundles(data.bundles);
+        }
+      } catch (error) {
+        console.error('Error loading bundles:', error);
+      }
+    }
+
+    function displayBundles(bundles) {
+      const container = document.getElementById('bundlesContainer');
+      
+      if (bundles.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--gray); padding: 2rem;">No bundles yet</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Network</th>
+              <th>Name</th>
+              <th>Data</th>
+              <th>Validity</th>
+              <th>Customer</th>
+              <th>Agent</th>
+              <th>Agent Pro</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${bundles.map(bundle => `
+              <tr>
+                <td>${bundle.network.name}</td>
+                <td>${bundle.name}</td>
+                <td>${bundle.dataAmount}</td>
+                <td>${bundle.validity}</td>
+                <td>${formatCurrency(bundle.customerPrice)}</td>
+                <td>${formatCurrency(bundle.agentPrice)}</td>
+                <td>${formatCurrency(bundle.agentProPrice)}</td>
+                <td><span class="badge badge-${bundle.isActive ? 'success' : 'danger'}">${bundle.isActive ? 'Active' : 'Inactive'}</span></td>
+                <td>
+                  <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick='editBundle(${JSON.stringify(bundle)})'>Edit</button>
+                  <button class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.875rem; border-color: var(--danger); color: var(--danger);" onclick="deleteBundle('${bundle._id}')">Delete</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function showAddBundleModal() {
+      document.getElementById('modalTitle').textContent = 'Add Bundle';
+      document.getElementById('bundleForm').reset();
+      document.getElementById('bundleId').value = '';
+      document.getElementById('bundleModal').classList.add('active');
+    }
+
+    function closeBundleModal() {
+      document.getElementById('bundleModal').classList.remove('active');
+    }
+
+    function editBundle(bundle) {
+      document.getElementById('modalTitle').textContent = 'Edit Bundle';
+      document.getElementById('bundleId').value = bundle._id;
+      document.getElementById('network').value = bundle.network._id;
+      document.getElementById('name').value = bundle.name;
+      document.getElementById('dataAmount').value = bundle.dataAmount;
+      document.getElementById('validity').value = bundle.validity;
+      document.getElementById('price').value = bundle.price;
+      document.getElementById('customerPrice').value = bundle.customerPrice;
+      document.getElementById('agentPrice').value = bundle.agentPrice;
+      document.getElementById('agentProPrice').value = bundle.agentProPrice;
+      document.getElementById('bundleModal').classList.add('active');
+    }
+
+    document.getElementById('bundleForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const bundleId = document.getElementById('bundleId').value;
+      const bundleData = {
+        network: document.getElementById('network').value,
+        name: document.getElementById('name').value,
+        dataAmount: document.getElementById('dataAmount').value,
+        validity: document.getElementById('validity').value,
+        price: parseFloat(document.getElementById('price').value),
+        customerPrice: parseFloat(document.getElementById('customerPrice').value),
+        agentPrice: parseFloat(document.getElementById('agentPrice').value),
+        agentProPrice: parseFloat(document.getElementById('agentProPrice').value),
+      };
+      
+      try {
+        const url = bundleId ? `${API_URL}/admin/bundles/${bundleId}` : `${API_URL}/admin/bundles`;
+        const method = bundleId ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
+          headers: getAuthHeaders(),
+          body: JSON.stringify(bundleData),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showToast('Bundle saved successfully!', 'success');
+          closeBundleModal();
+          loadBundles();
+        } else {
+          showToast('Failed to save bundle', 'error');
+        }
+      } catch (error) {
+        showToast('An error occurred', 'error');
+      }
+    });
+
+    async function deleteBundle(id) {
+      if (!confirm('Are you sure you want to delete this bundle?')) return;
+      
+      try {
+        const response = await fetch(`${API_URL}/admin/bundles/${id}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showToast('Bundle deleted successfully!', 'success');
+          loadBundles();
+        }
+      } catch (error) {
+        showToast('An error occurred', 'error');
+      }
+    }
+
+    loadNetworks();
+    loadBundles();
+  </script>
+</body>
+</html>

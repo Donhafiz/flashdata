@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile - FlashData</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container navbar-content">
+      <a href="/dashboard.html" class="logo">⚡ FlashData</a>
+      <ul class="nav-links">
+        <li><a href="/dashboard.html">Dashboard</a></li>
+        <li><a href="/buy-data.html">Buy Data</a></li>
+        <li><a href="/orders.html">Orders</a></li>
+        <li><a href="/transactions.html">Transactions</a></li>
+        <li><a href="/referrals.html">Referrals</a></li>
+        <li><a href="#" onclick="logout()" class="btn btn-outline">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container" style="padding: 2rem 0;">
+    <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 2rem;">My Profile</h1>
+
+    <div class="grid grid-2">
+      <!-- Profile Info -->
+      <div class="card">
+        <h3 class="card-header">Profile Information</h3>
+        <div id="alert-container"></div>
+        
+        <form id="profileForm">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-input" id="fullName" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" class="form-input" id="email" disabled>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input type="tel" class="form-input" id="phone" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Update Profile</button>
+        </form>
+      </div>
+
+      <!-- Account Details -->
+      <div class="card">
+        <h3 class="card-header">Account Details</h3>
+        
+        <div style="margin-bottom: 1.5rem;">
+          <label style="font-weight: 600; color: var(--gray); font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">User Role</label>
+          <span class="badge badge-primary" id="userRole">Customer</span>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+          <label style="font-weight: 600; color: var(--gray); font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">Referral Code</label>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <input type="text" class="form-input" id="referralCode" readonly style="flex: 1;">
+            <button class="btn btn-outline" onclick="copyReferralCode()">Copy</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+          <label style="font-weight: 600; color: var(--gray); font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">Member Since</label>
+          <p style="font-size: 1rem; font-weight: 600;" id="memberSince">-</p>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+          <label style="font-weight: 600; color: var(--gray); font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">Account Status</label>
+          <span class="badge badge-success" id="accountStatus">Active</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Change Password -->
+    <div class="card" style="margin-top: 2rem;">
+      <h3 class="card-header">Change Password</h3>
+      
+      <form id="passwordForm" style="max-width: 500px;">
+        <div class="form-group">
+          <label class="form-label">Current Password</label>
+          <input type="password" class="form-input" id="currentPassword" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">New Password</label>
+          <input type="password" class="form-input" id="newPassword" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirm New Password</label>
+          <input type="password" class="form-input" id="confirmPassword" required>
+        </div>
+
+        <button type="submit" class="btn btn-secondary">Change Password</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/notifications.js"></script>
+  <script>
+    checkAuth();
+
+    // Load profile data
+    async function loadProfile() {
+      try {
+        const response = await fetch(`${API_URL}/auth/me`, {
+          headers: getAuthHeaders(),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          const user = data.user;
+          
+          document.getElementById('fullName').value = user.fullName;
+          document.getElementById('email').value = user.email;
+          document.getElementById('phone').value = user.phone;
+          document.getElementById('userRole').textContent = user.role;
+          document.getElementById('referralCode').value = user.referralCode;
+          document.getElementById('memberSince').textContent = formatDate(user.createdAt || new Date());
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+      }
+    }
+
+    // Update profile
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const fullName = document.getElementById('fullName').value;
+      const phone = document.getElementById('phone').value;
+      
+      try {
+        const response = await fetch(`${API_URL}/user/profile`, {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ fullName, phone }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Update localStorage
+          const user = JSON.parse(localStorage.getItem('user'));
+          user.fullName = data.user.fullName;
+          user.phone = data.user.phone;
+          localStorage.setItem('user', JSON.stringify(user));
+          
+          showToast('Profile updated successfully!', 'success');
+        } else {
+          showToast(data.message || 'Failed to update profile', 'error');
+        }
+      } catch (error) {
+        showToast('An error occurred', 'error');
+      }
+    });
+
+    // Change password
+    document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      
+      if (newPassword !== confirmPassword) {
+        showToast('Passwords do not match!', 'error');
+        return;
+      }
+      
+      if (newPassword.length < 6) {
+        showToast('Password must be at least 6 characters', 'error');
+        return;
+      }
+      
+      showToast('Password change feature coming soon!', 'info');
+      document.getElementById('passwordForm').reset();
+    });
+
+    function copyReferralCode() {
+      const code = document.getElementById('referralCode');
+      code.select();
+      document.execCommand('copy');
+      showToast('Referral code copied!', 'success');
+    }
+
+    loadProfile();
+  </script>
+</body>
+</html>

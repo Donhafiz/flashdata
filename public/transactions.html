@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transactions - FlashData</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container navbar-content">
+      <a href="/dashboard.html" class="logo">⚡ FlashData</a>
+      <ul class="nav-links">
+        <li><a href="/dashboard.html">Dashboard</a></li>
+        <li><a href="/buy-data.html">Buy Data</a></li>
+        <li><a href="/orders.html">Orders</a></li>
+        <li><a href="/transactions.html">Transactions</a></li>
+        <li><a href="/referrals.html">Referrals</a></li>
+        <li><a href="/profile.html">Profile</a></li>
+        <li><a href="#" onclick="logout()" class="btn btn-outline">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container" style="padding: 2rem 0;">
+    <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 2rem;">Transaction History</h1>
+
+    <div class="card">
+      <div id="transactionsContainer">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    checkAuth();
+
+    async function loadTransactions() {
+      try {
+        const response = await fetch(`${API_URL}/user/transactions`, {
+          headers: getAuthHeaders(),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          displayTransactions(data.transactions);
+        }
+      } catch (error) {
+        console.error('Error loading transactions:', error);
+      }
+    }
+
+    function displayTransactions(transactions) {
+      const container = document.getElementById('transactionsContainer');
+      
+      if (transactions.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--gray); padding: 2rem;">No transactions yet</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Reference</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>Balance</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${transactions.map(txn => `
+              <tr>
+                <td><strong>${txn.reference}</strong></td>
+                <td><span class="badge badge-${getTypeClass(txn.type)}">${txn.type}</span></td>
+                <td>${txn.description}</td>
+                <td style="color: ${txn.type === 'Credit' || txn.type === 'Commission' || txn.type === 'Referral' ? 'var(--success)' : 'var(--danger)'}; font-weight: 600;">
+                  ${txn.type === 'Credit' || txn.type === 'Commission' || txn.type === 'Referral' ? '+' : '-'}${formatCurrency(txn.amount)}
+                </td>
+                <td>${formatCurrency(txn.balanceAfter || 0)}</td>
+                <td><span class="badge badge-${txn.status === 'Success' ? 'success' : 'danger'}">${txn.status}</span></td>
+                <td>${formatDate(txn.createdAt)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function getTypeClass(type) {
+      switch(type) {
+        case 'Credit': return 'success';
+        case 'Commission': return 'success';
+        case 'Referral': return 'success';
+        case 'Debit': return 'danger';
+        default: return 'primary';
+      }
+    }
+
+    loadTransactions();
+  </script>
+</body>
+</html>

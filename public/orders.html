@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orders - FlashData</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container navbar-content">
+      <a href="/dashboard.html" class="logo">⚡ FlashData</a>
+      <ul class="nav-links">
+        <li><a href="/dashboard.html">Dashboard</a></li>
+        <li><a href="/buy-data.html">Buy Data</a></li>
+        <li><a href="/orders.html">Orders</a></li>
+        <li><a href="/transactions.html">Transactions</a></li>
+        <li><a href="/referrals.html">Referrals</a></li>
+        <li><a href="/profile.html">Profile</a></li>
+        <li><a href="#" onclick="logout()" class="btn btn-outline">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container" style="padding: 2rem 0;">
+    <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 2rem;">My Orders</h1>
+
+    <div class="card">
+      <div id="ordersContainer">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    checkAuth();
+
+    async function loadOrders() {
+      try {
+        const response = await fetch(`${API_URL}/orders`, {
+          headers: getAuthHeaders(),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          displayOrders(data.orders);
+        }
+      } catch (error) {
+        console.error('Error loading orders:', error);
+      }
+    }
+
+    function displayOrders(orders) {
+      const container = document.getElementById('ordersContainer');
+      
+      if (orders.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--gray); padding: 2rem;">No orders yet</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Order #</th>
+              <th>Network</th>
+              <th>Bundle</th>
+              <th>Phone</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Delivery</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${orders.map(order => `
+              <tr>
+                <td><strong>${order.orderNumber}</strong></td>
+                <td>${order.network.name}</td>
+                <td>${order.bundle.dataAmount}</td>
+                <td>${order.phoneNumber}</td>
+                <td>${formatCurrency(order.amount)}</td>
+                <td><span class="badge badge-${getStatusClass(order.status)}">${order.status}</span></td>
+                <td><span class="badge badge-${getDeliveryClass(order.deliveryStatus)}">${order.deliveryStatus}</span></td>
+                <td>${formatDate(order.createdAt)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function getStatusClass(status) {
+      switch(status) {
+        case 'Completed': return 'success';
+        case 'Processing': return 'warning';
+        case 'Failed': return 'danger';
+        default: return 'primary';
+      }
+    }
+
+    function getDeliveryClass(status) {
+      switch(status) {
+        case 'Delivered': return 'success';
+        case 'Sending': return 'warning';
+        case 'Failed': return 'danger';
+        default: return 'primary';
+      }
+    }
+
+    loadOrders();
+  </script>
+</body>
+</html>

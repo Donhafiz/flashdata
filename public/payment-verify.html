@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verifying Payment - FlashData</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+    <div class="card" style="max-width: 500px; width: 100%; text-align: center;">
+      <div class="spinner" style="margin: 2rem auto;"></div>
+      <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem;">Verifying Payment...</h2>
+      <p style="color: var(--gray);">Please wait while we confirm your payment.</p>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    checkAuth();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const reference = urlParams.get('reference');
+
+    if (!reference) {
+      window.location.href = '/dashboard.html';
+    }
+
+    async function verifyPayment() {
+      try {
+        const response = await fetch(`${API_URL}/payment/verify/${reference}`, {
+          headers: getAuthHeaders(),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Update user wallet in localStorage
+          const user = JSON.parse(localStorage.getItem('user'));
+          user.wallet = data.wallet;
+          localStorage.setItem('user', JSON.stringify(user));
+          
+          // Redirect to dashboard
+          window.location.href = '/dashboard.html?payment=success';
+        } else {
+          window.location.href = '/dashboard.html?payment=failed';
+        }
+      } catch (error) {
+        console.error('Verification error:', error);
+        window.location.href = '/dashboard.html?payment=error';
+      }
+    }
+
+    verifyPayment();
+  </script>
+</body>
+</html>

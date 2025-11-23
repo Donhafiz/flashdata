@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Announcements - FlashData Admin</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container navbar-content">
+      <a href="/admin/dashboard.html" class="logo">⚡ FlashData Admin</a>
+      <ul class="nav-links">
+        <li><a href="/admin/dashboard.html">Dashboard</a></li>
+        <li><a href="/admin/networks.html">Networks</a></li>
+        <li><a href="/admin/bundles.html">Bundles</a></li>
+        <li><a href="/admin/users.html">Users</a></li>
+        <li><a href="/admin/orders.html">Orders</a></li>
+        <li><a href="/admin/announcements.html">Announcements</a></li>
+        <li><a href="#" onclick="logout()" class="btn btn-outline">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container" style="padding: 2rem 0;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <h1 style="font-size: 2rem; font-weight: 800;">Manage Announcements</h1>
+      <button class="btn btn-primary" onclick="showAddAnnouncementModal()">+ Add Announcement</button>
+    </div>
+
+    <div class="card">
+      <div id="announcementsContainer">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Announcement Modal -->
+  <div id="announcementModal" class="modal">
+    <div class="modal-content">
+      <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;" id="modalTitle">Add Announcement</h3>
+      <form id="announcementForm">
+        <input type="hidden" id="announcementId">
+        
+        <div class="form-group">
+          <label class="form-label">Title</label>
+          <input type="text" class="form-input" id="title" required placeholder="Announcement title">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Message</label>
+          <textarea class="form-input" id="message" rows="4" required placeholder="Announcement message"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select class="form-select" id="type" required>
+            <option value="Info">Info</option>
+            <option value="Warning">Warning</option>
+            <option value="Success">Success</option>
+            <option value="Error">Error</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="isActive">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;">Save Announcement</button>
+          <button type="button" class="btn btn-outline" onclick="closeAnnouncementModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    checkAuth();
+
+    async function loadAnnouncements() {
+      try {
+        const response = await fetch(`${API_URL}/admin/announcements`, {
+          headers: getAuthHeaders(),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          displayAnnouncements(data.announcements);
+        }
+      } catch (error) {
+        console.error('Error loading announcements:', error);
+      }
+    }
+
+    function displayAnnouncements(announcements) {
+      const container = document.getElementById('announcementsContainer');
+      
+      if (announcements.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--gray); padding: 2rem;">No announcements yet</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Message</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${announcements.map(announcement => `
+              <tr>
+                <td><strong>${announcement.title}</strong></td>
+                <td>${announcement.message}</td>
+                <td><span class="badge badge-${getTypeClass(announcement.type)}">${announcement.type}</span></td>
+                <td><span class="badge badge-${announcement.isActive ? 'success' : 'danger'}">${announcement.isActive ? 'Active' : 'Inactive'}</span></td>
+                <td>${formatDate(announcement.createdAt)}</td>
+                <td>
+                  <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick='editAnnouncement(${JSON.stringify(announcement)})'>Edit</button>
+                  <button class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.875rem; border-color: var(--danger); color: var(--danger);" onclick="deleteAnnouncement('${announcement._id}')">Delete</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function getTypeClass(type) {
+      switch(type) {
+        case 'Success': return 'success';
+        case 'Warning': return 'warning';
+        case 'Error': return 'danger';
+        default: return 'primary';
+      }
+    }
+
+    function showAddAnnouncementModal() {
+      document.getElementById('modalTitle').textContent = 'Add Announcement';
+      document.getElementById('announcementForm').reset();
+      document.getElementById('announcementId').value = '';
+      document.getElementById('announcementModal').classList.add('active');
+    }
+
+    function closeAnnouncementModal() {
+      document.getElementById('announcementModal').classList.remove('active');
+    }
+
+    function editAnnouncement(announcement) {
+      document.getElementById('modalTitle').textContent = 'Edit Announcement';
+      document.getElementById('announcementId').value = announcement._id;
+      document.getElementById('title').value = announcement.title;
+      document.getElementById('message').value = announcement.message;
+      document.getElementById('type').value = announcement.type;
+      document.getElementById('isActive').value = announcement.isActive.toString();
+      document.getElementById('announcementModal').classList.add('active');
+    }
+
+    document.getElementById('announcementForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const announcementId = document.getElementById('announcementId').value;
+      const announcementData = {
+        title: document.getElementById('title').value,
+        message: document.getElementById('message').value,
+        type: document.getElementById('type').value,
+        isActive: document.getElementById('isActive').value === 'true',
+      };
+      
+      try {
+        const url = announcementId ? `${API_URL}/admin/announcements/${announcementId}` : `${API_URL}/admin/announcements`;
+        const method = announcementId ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
+          headers: getAuthHeaders(),
+          body: JSON.stringify(announcementData),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showToast('Announcement saved successfully!', 'success');
+          closeAnnouncementModal();
+          loadAnnouncements();
+        } else {
+          showToast('Failed to save announcement', 'error');
+        }
+      } catch (error) {
+        showToast('An error occurred', 'error');
+      }
+    });
+
+    async function deleteAnnouncement(id) {
+      if (!confirm('Are you sure you want to delete this announcement?')) return;
+      
+      try {
+        const response = await fetch(`${API_URL}/admin/announcements/${id}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showToast('Announcement deleted successfully!', 'success');
+          loadAnnouncements();
+        }
+      } catch (error) {
+        showToast('An error occurred', 'error');
+      }
+    }
+
+    loadAnnouncements();
+  </script>
+</body>
+</html>

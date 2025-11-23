@@ -1,0 +1,57 @@
+FlashData Platform Structure
+============================
+
+Frontend (HTML/CSS/JS):
+- public/
+  - index.html (Landing page)
+  - login.html
+  - register.html
+  - dashboard.html (User dashboard)
+  - buy-data.html
+  - orders.html
+  - transactions.html
+  - referrals.html
+  - alpha-register.html
+  - admin/
+    - dashboard.html
+    - networks.html
+    - bundles.html
+    - users.html
+    - orders.html
+    - commissions.html
+    - announcements.html
+  - css/
+    - styles.css
+  - js/
+    - main.js
+    - auth.js
+    - dashboard.js
+    - buy-data.js
+    - admin.js
+
+Backend (Node.js/Express):
+- server.js
+- config/
+  - db.js
+  - paystack.js
+- models/
+  - User.js
+  - Order.js
+  - Transaction.js
+  - Bundle.js
+  - Network.js
+  - Referral.js
+  - Announcement.js
+- routes/
+  - auth.js
+  - user.js
+  - order.js
+  - payment.js
+  - admin.js
+  - referral.js
+- middleware/
+  - auth.js
+  - admin.js
+- utils/
+  - commission.js
+  - delivery.js

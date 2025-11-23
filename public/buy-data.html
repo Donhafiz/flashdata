@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buy Data - FlashData</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container navbar-content">
+      <a href="/dashboard.html" class="logo">⚡ FlashData</a>
+      <ul class="nav-links">
+        <li><a href="/dashboard.html">Dashboard</a></li>
+        <li><a href="/buy-data.html">Buy Data</a></li>
+        <li><a href="/orders.html">Orders</a></li>
+        <li><a href="/transactions.html">Transactions</a></li>
+        <li><a href="/referrals.html">Referrals</a></li>
+        <li><a href="/profile.html">Profile</a></li>
+        <li><a href="#" onclick="logout()" class="btn btn-outline">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container" style="padding: 2rem 0;">
+    <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 2rem;">Buy Data Bundle</h1>
+
+    <div class="grid grid-3" style="margin-bottom: 2rem;">
+      <div class="card">
+        <p style="color: var(--gray); margin-bottom: 0.5rem;">Wallet Balance</p>
+        <h3 style="font-size: 1.5rem; font-weight: 700;" id="walletBalance">GH₵ 0.00</h3>
+      </div>
+      <div class="card">
+        <p style="color: var(--gray); margin-bottom: 0.5rem;">User Level</p>
+        <h3 style="font-size: 1.5rem; font-weight: 700;" id="userRole">Customer</h3>
+      </div>
+      <div class="card">
+        <p style="color: var(--gray); margin-bottom: 0.5rem;">Commission Rate</p>
+        <h3 style="font-size: 1.5rem; font-weight: 700;" id="commissionRate">0%</h3>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-header">Select Bundle</h3>
+      
+      <div id="alert-container"></div>
+
+      <form id="buyDataForm">
+        <div class="form-group">
+          <label class="form-label">Network</label>
+          <select class="form-select" id="network" required>
+            <option value="">Select Network</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Data Bundle</label>
+          <select class="form-select" id="bundle" required disabled>
+            <option value="">Select a network first</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input type="tel" class="form-input" id="phoneNumber" required placeholder="Enter phone number">
+        </div>
+
+        <div class="card" style="background: var(--light); margin-bottom: 1.5rem;">
+          <h4 style="font-weight: 700; margin-bottom: 1rem;">Order Summary</h4>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span>Bundle:</span>
+            <span id="summaryBundle">-</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span>Price:</span>
+            <span id="summaryPrice">GH₵ 0.00</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span>Commission:</span>
+            <span id="summaryCommission" style="color: var(--success); font-weight: 600;">GH₵ 0.00</span>
+          </div>
+          <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border);">
+          <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.125rem;">
+            <span>Total:</span>
+            <span id="summaryTotal">GH₵ 0.00</span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Purchase Data</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/buy-data.js"></script>
+</body>
+</html>
